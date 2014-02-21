@@ -40,7 +40,8 @@
 				}
 
 				// Render result
-				document.getElementById("result").innerHTML = distance.toFixed(2);
+				document.getElementById("kilometers").innerHTML = distance.toFixed(2);
+				document.getElementById("miles").innerHTML = (distance * 0.621371).toFixed(2);
 				document.getElementById("points").innerHTML = points;
 
 				// reset input value

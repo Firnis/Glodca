@@ -1,6 +1,12 @@
-#result:after {
+
+#kilometers:after {
 	content: " km";
 }
+
+#miles:after {
+	content: " miles";
+}
+
 #points:after {
 	content: " points counted";
 }
