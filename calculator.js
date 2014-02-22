@@ -1,59 +1,85 @@
 (function() {
 	var input = document.getElementById("kml-file");
 
+	var reader = new FileReader();
+
 	input.addEventListener('change', function(evt) {
 
-		var reader = new FileReader();
+		var points 		= 0;
+		var distance 	= 0;
+
+		if(reader.readyState == reader.LOADING) {
+			reader.abort();
+		}
 
 		reader.onloadend = function(evt) {
 			if (evt.target.readyState == FileReader.DONE) {
-				var result = evt.target.result;
+				var data = evt.target.result;
 
-				var re = /<gx:coord>([0-9.]+)\s([0-9.]+)/gi;
-
-				var coords;
+				var reResult;
 				var prevCoords;
 
-				var points 		= 1;
-				var distance 	= 0;
+				// starting point
+				points++;
 
-				while( (coords = re.exec(result)) !== null ) {
+				var re = /<gx:coord>([^<]+)/gi;
+
+				while( (reResult = re.exec(data)) !== null ) {
+
+					var coords = reResult[1].split(' ');
+
 					if( !prevCoords ) {
 						prevCoords = coords;
 						continue;
 					}
 
-					var lat1 = prevCoords[1],
-						lng1 = prevCoords[2],
-						lat2 = coords[1],
-						lng2 = coords[2];
+					var lat1 = prevCoords[0],
+						lng1 = prevCoords[1],
+						lat2 = coords[0],
+						lng2 = coords[1];
 
 					// skip repeated coordinates.
 					if( lat1 != lat2 && lng1 != lng2 ) {
 
 						distance += getDistance(lat1, lat2, lng1, lng2);
 
+						points++;
 					}
 
-					++points;
 					prevCoords = coords;
 				}
 
-				// Render result
-				document.getElementById("kilometers").innerHTML = distance.toFixed(2);
-				document.getElementById("miles").innerHTML = (distance * 0.621371).toFixed(2);
-				document.getElementById("points").innerHTML = points;
-
-				// reset input value
-				input.value = '';
+				readNextFile() || renderResult(distance, points);
 			}
 		};
 
-		reader.readAsBinaryString( input.files[0] );
+		var readNextFile = (function(reader, files) {
+			var counter = 0;
+			var length  = files.length;
+
+			return function() {
+				if( counter < length ) {
+					reader.readAsBinaryString( files[counter] );
+					counter++;
+
+					return true;
+				}
+				
+				return false;
+			}
+		})(reader, input.files);
+
+		readNextFile();
 	});
 
 	function toRad(value) {
 		return value * Math.PI / 180;
+	}
+
+	function renderResult(distance, points) {
+		document.getElementById("kilometers").innerHTML = distance.toFixed(2);
+		document.getElementById("miles").innerHTML = (distance * 0.621371).toFixed(2);
+		document.getElementById("points").innerHTML = points;
 	}
 
 	// "haversine" formula. http://www.movable-type.co.uk/scripts/latlong.html
